@@ -83,6 +83,57 @@ class facesDataset(Dataset):
 
 		return img1, img2, label
 		
-	def __len__(self);
+	def __len__(self):
 		return len(self.train_data)
+
+class SiameseNetwork(nn.Module):
+	def __init__(self):
+		super(SiameseNetwork, self).__init__()
+		self.cnn1 = nn.Sequential(
+			nn.Conv2d(3,64,5,padding=2),
+			nn.ReLU(inplace=True),
+			nn.BatchNorm2d(64),
+			nn.MaxPool2d(2,stride=2),
+			nn.Conv2d(64,128,5,padding=2),
+			nn.ReLU(inplace=True),
+			nn.BatchNorm2d(128),
+			nn.MaxPool2d(2,stride=2),
+			nn.Conv2d(128,256,3,padding=1),
+			nn.ReLU(inplace=True),
+			nn.BatchNorm2d(256),
+			nn.MaxPool2d(2,stride=2),
+			nn.Conv2d(256,512,3,padding=1),
+			nn.ReLU(inplace=True),
+			nn.BatchNorm2d(512),
+		)
+
+		self.fc1 = nn.Sequential(
+			nn.Linear(131072,1024),
+			nn.ReLU(inplace=True),
+			nn.BatchNorm2d(1024),
+		)
+
+		self.fc2 = nn.Sequntial(
+			nn.Linear(2048, 1),
+			nn.Sigmoid()
+		)
+
+	def forward_once(self, x):
+		tmp = self.cnn1(x)
+		tmp = tmp.view(tmp.size()[0], -1)
+		result = self.fc1(tmp)
+		return result
+
+	def forward(self, input1, input2):
+		f1 = self.forward_once(input1)
+		f2 = self.forward_once(input2)
+		f12 = torch.cat((f1, f2),1)
+		result = self.fc2(f12)
+		return result
+
+
+
+
+
+
 
