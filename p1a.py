@@ -149,6 +149,8 @@ if '--save' in sys.argv:
 	counter = []
 	loss_history = []
 	iteration_number = 0
+	total_loss = 0.0
+	total_correct = 0
 
 	for epoch in range(epochs):
 		for i, data in enumerate(train_loader,0):
@@ -162,12 +164,20 @@ if '--save' in sys.argv:
 			loss.backward()
 			optimizer.step()
 
+			#y_round = torch.round(y_pred)
+
 			if i % 10 == 0:
 				print("Epoch %d, Batch %d, Loss %f" % (epoch, i ,loss.data[0]))
 				iteration_number += 10
 				counter.append(iteration_number)
 				loss_history.append(loss.data[0])
+			#total_loss += loss.data[0]
+			#total_correct += (y_round.view(-1) == label.view(-1)).sum().float()
+
+	#mean_loss = total_loss / float(len(train_set)/8)
+	#mean_correct = total_correct / float(len(train_set))
+	#print "Prediction accuracy is: ", mean_correct
 
 	weight_index = sys.argv.index('--save') + 1
 	weight_path = sys.argv[weight_index]
-#	torch.save(net.state_dict(), weight_path)
+	torch.save(net.state_dict(), weight_path)
