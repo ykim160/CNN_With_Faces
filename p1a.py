@@ -15,6 +15,7 @@ import PIL.ImageOps
 import torch.nn as nn
 from torch import optim
 import torch.nn.functional as F
+import sys
 
 # read the training data and split each line
 file = open("train.txt", "r")
@@ -64,8 +65,8 @@ class facesDataset(Dataset):
 		self.transform = transform
 
 	def __getitem__(self, index):
-		img1_path = 'lfw/' + self.train_data[index][0]
-		img2_path = 'lfw/' + self.train_data[index][1]
+		img1_path = img_path + self.train_data[index][0]
+		img2_path = img_path + self.train_data[index][1]
 		img_label = self.train_data[index][2]
 		img1 = Image.open(img1_path).convert('RGB')
 		img2 = Image.open(img2_path).convert('RGB')
@@ -113,7 +114,7 @@ class SiameseNetwork(nn.Module):
 			nn.BatchNorm2d(1024),
 		)
 
-		self.fc2 = nn.Sequntial(
+		self.fc2 = nn.Sequential(
 			nn.Linear(2048, 1),
 			nn.Sigmoid()
 		)
@@ -131,9 +132,12 @@ class SiameseNetwork(nn.Module):
 		result = self.fc2(f12)
 		return result
 
+if '--save' in sys.argv:
+	trans = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
+	train_set = facesDataset(train_data = train, img_path='lfw/', transform=trans, augment=False)
+	train_loader = DataLoader(train_set, batch_size=8, shuffle=True, num_workers=2)
 
-
-
+	net = SiameseNetwork().cuda()
 
 
 
