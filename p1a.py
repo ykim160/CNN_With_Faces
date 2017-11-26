@@ -59,15 +59,17 @@ def augmentations(image):
 
 class facesDataset(Dataset):
 
-	def __init__(self, train_data, img_path, transform=None, augment=False):
+	def __init__(self, train_data, transform=None, augment=False):
 		self.train_data = train_data
-		self.img_path = img_path
+		#self.img_path = img_path
 		self.transform = transform
+		self.augment = augment
 
 	def __getitem__(self, index):
-		img1_path = img_path + self.train_data[index][0]
-		img2_path = img_path + self.train_data[index][1]
-		img_label = self.train_data[index][2]
+		img1_path = 'lfw/' + self.train_data[index][0]
+		img2_path = 'lfw/' + self.train_data[index][1]
+		img_label = map(float,self.train_data[index][2])
+		img_label = torch.from_numpy(np.array(img_label)).float()
 		img1 = Image.open(img1_path).convert('RGB')
 		img2 = Image.open(img2_path).convert('RGB')
 
@@ -82,7 +84,7 @@ class facesDataset(Dataset):
 			img1 = augmentations(img1)
 			img2 = augmentations(img2)
 
-		return img1, img2, label
+		return img1, img2, img_label
 		
 	def __len__(self):
 		return len(self.train_data)
@@ -134,10 +136,44 @@ class SiameseNetwork(nn.Module):
 
 if '--save' in sys.argv:
 	trans = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
-	train_set = facesDataset(train_data = train, img_path='lfw/', transform=trans, augment=False)
+	train_set = facesDataset(train_data=train, transform=trans, augment=False)
 	train_loader = DataLoader(train_set, batch_size=8, shuffle=True, num_workers=2)
 
 	net = SiameseNetwork().cuda()
+	function = nn.BCELoss()
+	learning_rate = 1e-6
+	optimizer = optim.Adam(net.parameters(),lr = learning_rate)
+	epochs = 2
+	counter = []
+	loss_history = []
+	iteration_number = 0
+
+	for epoch in range(epochs):
+		for i, data in enumerate(train_loader,0):
+			img0, img1, label = data
+			img0 = Variable(img0).cuda()
+			img1 = Variable(img1).cuda()
+			label = Variable(label).cuda()
+			#output1, output2 = net(img0,img1)
+			optimizer.zero_grad()
+			y_pred = net(img0, img1)
+			#loss = function(output1,output2,label)
+			loss = function(y_pred, label)
+			loss.backward()
+			optimizer.step()
+
+			if i % 10 == 0:
+				print("Epoch %d, Batch %d Loss %f" % (epoch, i ,loss.data[0]))
+				iteration_number += 10
+				counter.append(iteration_number)
+				loss_history.append(loss.data[0])
+		
+
+
+
+
+
+
 
 
 
