@@ -135,6 +135,8 @@ class SiameseNetwork(nn.Module):
 		return result
 
 if '--save' in sys.argv:
+	
+
 	trans = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
 	train_set = facesDataset(train_data=train, transform=trans, augment=False)
 	train_loader = DataLoader(train_set, batch_size=8, shuffle=True, num_workers=2)
@@ -143,7 +145,7 @@ if '--save' in sys.argv:
 	function = nn.BCELoss()
 	learning_rate = 1e-6
 	optimizer = optim.Adam(net.parameters(),lr = learning_rate)
-	epochs = 2
+	epochs = 1
 	counter = []
 	loss_history = []
 	iteration_number = 0
@@ -154,26 +156,18 @@ if '--save' in sys.argv:
 			img0 = Variable(img0).cuda()
 			img1 = Variable(img1).cuda()
 			label = Variable(label).cuda()
-			#output1, output2 = net(img0,img1)
 			optimizer.zero_grad()
 			y_pred = net(img0, img1)
-			#loss = function(output1,output2,label)
 			loss = function(y_pred, label)
 			loss.backward()
 			optimizer.step()
 
 			if i % 10 == 0:
-				print("Epoch %d, Batch %d Loss %f" % (epoch, i ,loss.data[0]))
+				print("Epoch %d, Batch %d, Loss %f" % (epoch, i ,loss.data[0]))
 				iteration_number += 10
 				counter.append(iteration_number)
 				loss_history.append(loss.data[0])
-		
 
-
-
-
-
-
-
-
-
+	weight_index = sys.argv.index('--save') + 1
+	weight_path = sys.argv[weight_index]
+#	torch.save(net.state_dict(), weight_path)
