@@ -24,6 +24,12 @@ train = []
 for i in range(len(temp)):
 	train.append(temp[i].split())
 
+file = open("test.txt", "r")
+temp2 = file.readlines()
+test = []
+for j in range(len(temp2)):
+	test.append(temp2[j].split())
+
 def augmentations(image):
 	# Mirror flipping only left to right
 	if random.random() < 0.5:
@@ -73,16 +79,16 @@ class facesDataset(Dataset):
 		img1 = Image.open(img1_path).convert('RGB')
 		img2 = Image.open(img2_path).convert('RGB')
 
-		if self.transform is not None:
-			img1 = self.transform(img1)
-			img2 = self.transform(img2)
-
 		# if we need to augment it goes through this process
 		prob_augment = (random.random() <= 0.7)
 		# it augments with a probability of 70%
-		if self.augment == True and prob_agument == True:
+		if self.augment == True and prob_augment == True:
 			img1 = augmentations(img1)
 			img2 = augmentations(img2)
+
+		if self.transform is not None:
+			img1 = self.transform(img1)
+			img2 = self.transform(img2)
 
 		return img1, img2, img_label
 		
@@ -135,22 +141,18 @@ class SiameseNetwork(nn.Module):
 		return result
 
 if '--save' in sys.argv:
-	
-
 	trans = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
-	train_set = facesDataset(train_data=train, transform=trans, augment=False)
-	train_loader = DataLoader(train_set, batch_size=8, shuffle=True, num_workers=2)
+	train_set = facesDataset(train_data=train, transform=trans, augment=True)
+	train_loader = DataLoader(train_set, batch_size=16, shuffle=True, num_workers=2)
 
 	net = SiameseNetwork().cuda()
 	function = nn.BCELoss()
 	learning_rate = 1e-6
 	optimizer = optim.Adam(net.parameters(),lr = learning_rate)
-	epochs = 1
+	epochs = 10
 	counter = []
 	loss_history = []
 	iteration_number = 0
-	total_loss = 0.0
-	total_correct = 0
 
 	for epoch in range(epochs):
 		for i, data in enumerate(train_loader,0):
@@ -164,20 +166,69 @@ if '--save' in sys.argv:
 			loss.backward()
 			optimizer.step()
 
-			#y_round = torch.round(y_pred)
-
 			if i % 10 == 0:
 				print("Epoch %d, Batch %d, Loss %f" % (epoch, i ,loss.data[0]))
 				iteration_number += 10
 				counter.append(iteration_number)
 				loss_history.append(loss.data[0])
-			#total_loss += loss.data[0]
-			#total_correct += (y_round.view(-1) == label.view(-1)).sum().float()
-
-	#mean_loss = total_loss / float(len(train_set)/8)
-	#mean_correct = total_correct / float(len(train_set))
-	#print "Prediction accuracy is: ", mean_correct
 
 	weight_index = sys.argv.index('--save') + 1
 	weight_path = sys.argv[weight_index]
 	torch.save(net.state_dict(), weight_path)
+
+if '--load' in sys.argv:
+	weight_index = sys.argv.index('--load') + 1
+	weight_path = sys.argv[weight_index]
+
+	net = SiameseNetwork().cuda()
+	net.load_state_dict(torch.load(weight_path))
+	net.eval()
+	function = nn.BCELoss()
+
+	# Testing on training data set
+	trans1 = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
+	train_set1 = facesDataset(train_data=train, transform=trans1)
+	test_loader1 = DataLoader(train_set1, batch_size=4, shuffle=False)
+	cum_correct = 0
+
+	for i, data in enumerate(test_loader1):
+		img0, img1, label = data
+		label = label.view(label.numel(),-1)
+		img0 = Variable(img0, volatile=True).cuda()
+		img1 = Variable(img1, volatile=True).cuda()
+		label = Variable(label, volatile=True).cuda()
+		y_pred = net(img0, img1)
+		loss = function(y_pred, label)
+		y_round = torch.round(y_pred)
+		if i % 10 == 0:
+			print ("Batch %d, Loss %f" % (i, loss.data[0]))
+		cum_correct += (y_round.view(-1) == label.view(-1)).sum().float()
+
+	avg_correct = cum_correct / float(len(train_set1))
+
+	print "Training set prediction Accuracy is: ", avg_correct * 100
+
+	# Testing on testing data set
+	trans2 = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
+	train_set2 = facesDataset(train_data=test, transform=trans2)
+	test_loader1 = DataLoader(train_set2, batch_size=4, shuffle=False)
+	cum_correct = 0
+
+	for i, data in enumerate(test_loader1):
+		img0, img1, label = data
+		label = label.view(label.numel(),-1)
+		img0 = Variable(img0, volatile=True).cuda()
+		img1 = Variable(img1, volatile=True).cuda()
+		label = Variable(label, volatile=True).cuda()
+		y_pred = net(img0, img1)
+		loss = function(y_pred, label)
+		y_round = torch.round(y_pred)
+		if i % 10 == 0:
+			print ("Batch %d, Loss %f" % (i, loss.data[0]))
+		cum_correct += (y_round.view(-1) == label.view(-1)).sum().float()
+
+	avg_correct = cum_correct / float(len(train_set2))
+
+	print "Testing set prediction Accuracy is: ", avg_correct * 100
+else:
+	print "Please use either --save MODEL_NAME or --load MODEL_NAME"
