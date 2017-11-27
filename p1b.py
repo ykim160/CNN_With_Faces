@@ -206,7 +206,7 @@ elif '--load' in sys.argv:
 
 	avg_correct = cum_correct / float(len(train_set1))
 
-	print "Training set prediction Accuracy is: ", avg_correct * 100
+	print "Training set prediction Accuracy is: ", avg_correct * 100,"\n"
 
 	# Testing on testing data set
 	trans2 = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])

@@ -181,7 +181,7 @@ elif '--load' in sys.argv:
 	# Testing on training data set
 	trans1 = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
 	train_set1 = facesDataset(train_data=train, transform=trans1)
-	test_loader1 = DataLoader(train_set1, batch_size=4, shuffle=False)
+	test_loader1 = DataLoader(train_set1, batch_size=8, shuffle=False)
 	cum_correct = 0
 
 	for i, data in enumerate(test_loader1):
@@ -204,7 +204,7 @@ elif '--load' in sys.argv:
 	# Testing on testing data set
 	trans2 = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
 	train_set2 = facesDataset(train_data=test, transform=trans2)
-	test_loader1 = DataLoader(train_set2, batch_size=4, shuffle=False)
+	test_loader1 = DataLoader(train_set2, batch_size=8, shuffle=False)
 	cum_correct = 0
 
 	for i, data in enumerate(test_loader1):
