@@ -4,6 +4,29 @@ Ye Chan Kim - ykim160
 
 Make Deep Learning Happen With Faces:
 
+For this assignemnt I implemented my code assuming that the image files are in the directiory ./lfw
+and that the test and train files are in the same directory. 
+
+dir/
+|__ lfw/
+|    |__ img1_folder
+|    |     |__ img1.jpg
+|    ...
+|
+|__ train.txt
+|__ test.txt
+|__ p1a.py
+|__ p1b.py
+
+To save model:
+python p1a.py --save Model_Name
+python p1b.py --save Model_Name
+
+To load model:
+python p1a.py --load Model_Name
+python p1b.py --load Model_Name
+
+
 Google Drive Liink: https://drive.google.com/drive/folders/1G2lAS5jJu7rQXAZodv1qhANymWslMrfS?usp=sharing 
 
  - aug_model is the model using augmentation for part a)
