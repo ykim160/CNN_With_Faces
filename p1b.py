@@ -67,7 +67,6 @@ class facesDataset(Dataset):
 
 	def __init__(self, train_data, transform=None, augment=False):
 		self.train_data = train_data
-		#self.img_path = img_path
 		self.transform = transform
 		self.augment = augment
 
@@ -186,7 +185,6 @@ elif '--load' in sys.argv:
 	net = SiameseNetwork().cuda()
 	net.load_state_dict(torch.load(weight_path))
 	net.eval()
-#	function = nn.BCELoss()
 
 	# Testing on training data set
 	trans1 = transforms.Compose([transforms.Scale((128,128)),transforms.ToTensor()])
@@ -201,7 +199,7 @@ elif '--load' in sys.argv:
 		img1 = Variable(img1, volatile=True).cuda()
 		output1, output2 = net(img0, img1)
 		distance = F.pairwise_distance(output1, output2)
-		y_pred = (distance.data < 13).cpu().numpy()
+		y_pred = (distance.data < 11.2).cpu().numpy()
 		if i % 10 == 0:
 			print ("Batch %d, Distance %f" % (i, (distance.data[0]).cpu().numpy()))
 		cum_correct += (y_pred == label).sum()
@@ -223,7 +221,7 @@ elif '--load' in sys.argv:
 		img1 = Variable(img1, volatile=True).cuda()
 		outpu1, output2 = net(img0, img1)
 		distance = F.pairwise_distance(output1, output2)
-		y_pred = (distance.data < 13).cpu().numpy()
+		y_pred = (distance.data < 11.2).cpu().numpy()
 		if i % 10 == 0:
 			print ("Batch %d, Distance %f" % (i, (distance.data[0]).cpu().numpy()))
 		cum_correct += (y_pred == label).sum()

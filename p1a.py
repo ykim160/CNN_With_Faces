@@ -67,7 +67,6 @@ class facesDataset(Dataset):
 
 	def __init__(self, train_data, transform=None, augment=False):
 		self.train_data = train_data
-		#self.img_path = img_path
 		self.transform = transform
 		self.augment = augment
 
@@ -150,9 +149,6 @@ if '--save' in sys.argv:
 	learning_rate = 1e-6
 	optimizer = optim.Adam(net.parameters(),lr = learning_rate)
 	epochs = 10
-	counter = []
-	loss_history = []
-	iteration_number = 0
 
 	for epoch in range(epochs):
 		for i, data in enumerate(train_loader,0):
@@ -168,15 +164,12 @@ if '--save' in sys.argv:
 
 			if i % 10 == 0:
 				print("Epoch %d, Batch %d, Loss %f" % (epoch, i ,loss.data[0]))
-				iteration_number += 10
-				counter.append(iteration_number)
-				loss_history.append(loss.data[0])
 
 	weight_index = sys.argv.index('--save') + 1
 	weight_path = sys.argv[weight_index]
 	torch.save(net.state_dict(), weight_path)
 
-if '--load' in sys.argv:
+elif '--load' in sys.argv:
 	weight_index = sys.argv.index('--load') + 1
 	weight_path = sys.argv[weight_index]
 
